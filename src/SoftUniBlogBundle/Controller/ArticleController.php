@@ -1,0 +1,66 @@
+<?php
+
+namespace SoftUniBlogBundle\Controller;
+
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
+use SoftUniBlogBundle\Entity\Article;
+use SoftUniBlogBundle\Entity\User;
+use SoftUniBlogBundle\Form\ArticleType;
+use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\Request;
+
+class ArticleController extends Controller
+{
+    /**
+     * @param Request $request
+     *
+     * @Route("/article/create", name="article_create")
+     * @Security("is_granted('IS_AUTHENTICATED_FULLY')")
+     *
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     */
+    public function createAction(Request $request)
+    {
+        $article = new Article();
+        $form = $this->createForm(ArticleType::class, $article);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $article->setAuthor($this->getUser());
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($article);
+            $entityManager->flush();
+
+            return $this->redirectToRoute("blog_index");
+        }
+        return $this->render("article/create.html.twig",
+            [
+                "form"=>$form->createView()
+            ]);
+    }
+
+    /**
+     * @Route("/article/{id}", name="article_view")
+     * @param $id
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function viewArticle($id)
+    {
+        $article = $this->getDoctrine()->getRepository(Article::class)->find($id);
+        return $this->render("article/article.html.twig",
+            [
+                "article" => $article
+            ]);
+    }
+
+    /**
+     * @Route("/article/allarticles", name="123")
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function test()
+    {
+        return $this->render("article/allarticles.html.twig");
+    }
+}
